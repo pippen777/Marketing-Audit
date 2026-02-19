@@ -91,7 +91,7 @@ def generate_llm_summary(api_key, model, all_data):
         "Content-Type": "application/json"
     }
     
-prompt = f"""
+    prompt = f"""
     You are an elite Digital Marketing Expert (DME) at a top agency, partnering with a Creative Director.
     Review this competitive landscape data based on the 2026 STELLAR framework.
     
@@ -125,8 +125,7 @@ prompt = f"""
     **Call to Action (CTA)**
     * **Current:** [Identify the implied or missing CTA]
     * **Proposed:** [Write a high-value, low-friction CTA. e.g., "Get Your Free Audit" instead of "Learn More"]
-    * **Strategic Rationale:** [Explain how action-oriented, first-person CTAs reduce friction and increase CTR. Cite 2025/2026 data, like HubSpot's findings on personalized CTAs or WiserNotify's above-the-fold placement stats.]
-    """
+    * **Strategic Rationale:** [Explain how action-oriented, first-person CTAs reduce friction and increase CTR. Cite 2025/2026 data.]
     """
     
     payload = {
@@ -140,7 +139,6 @@ prompt = f"""
         return response.json()['choices'][0]['message']['content']
     except Exception as e:
         return f"❌ Error connecting to OpenRouter: {str(e)}"
-
 # --- MAIN EXECUTION ---
 if st.button("Run Competitive Landscape Audit", type="primary"):
     urls_to_check = [url for url in [target_url, comp1_url, comp2_url, comp3_url] if url.strip()]
