@@ -93,24 +93,40 @@ def generate_llm_summary(api_key, model, all_data):
     
     prompt = f"""
     You are an elite Digital Marketing Expert (DME) at a top agency, partnering with a Creative Director.
-    Review this competitive landscape data based on the STELLAR framework.
+    Review this competitive landscape data based on the 2026 STELLAR framework.
     
     DATA (JSON Format):
     {json.dumps(all_data, indent=2)}
 
-    TASK: Write a highly actionable, 3-paragraph Competitive Executive Summary.
+    TASK: Write a highly actionable Competitive Executive Summary. 
     
-    GUARDRAILS (STRICT):
+    STRICT GUARDRAILS FOR OUTPUT:
     - NEVER use generic marketing buzzwords like "Elevate", "Tailored", "Synergy", or "Transform".
-    - If suggesting copy, make it punchy, benefit-driven, and focused on revenue/growth.
-    - If the client has an llms.txt file, frame it as a BACKEND technical advantage for Generative Engine Optimization (GEO). Do NOT suggest adding "AI" to their frontend marketing copy.
-    - CTAs must be low-friction and action-oriented (e.g., "Get Your Free Audit", not "Learn More").
+    - You must cite authoritative 2025/2026 Conversion Rate Optimization (CRO) best practices (e.g., CXL, Nielsen Norman Group, HubSpot, Google Core Web Vitals) to justify your creative decisions.
+    
+    FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
 
-    1. Paragraph 1 (The Landscape): Compare the Target Client's H1 and Meta Description against the competitors. Who has the strongest "Benefit-Focus"? Point out if competitors have missing or broken SEO tags (like missing H1s).
-    2. Paragraph 2 (The White Space): Identify a strategic messaging gap the client can exploit to stand out. 
-    3. Paragraph 3 (Creative Directive): Provide a bulleted "Phase 1 Creative Brief" telling the copy and design team exactly how to update the Client's homepage Hero section to beat these competitors.
+    ### 1. The Landscape & The White Space
+    [Write 1 paragraph comparing the Target Client's messaging to the competitors. Identify the strategic gap the client can exploit to stand out. Note any broken SEO/GEO tags among competitors.]
 
-    Tone: Candid, authoritative, direct, and expert-level.
+    ### 2. Phase 1 Creative Brief (Homepage Hero Redesign)
+    Provide the redesign directives for the Target Client using this exact structure:
+
+    **Headline (H1)**
+    * **Current:** [Insert Client's Current H1]
+    * **Proposed:** [Write a punchy, benefit-driven H1 focused on revenue/growth/solutions]
+    * **Strategic Rationale:** [Explain the psychology behind the change. Cite a 2026 UX/CRO best practice, such as CXL's "Clarity trumps persuasion" or Nielsen Norman Group's scanning behaviors.]
+
+    **Subheadline (H2)**
+    * **Current:** [Insert Client's Current Meta Description / Subhead]
+    * **Proposed:** [Write a 1-2 sentence subhead that handles objections and expands on the H1]
+    * **Strategic Rationale:** [Explain why this reduces bounce rate using industry best practices.]
+
+    **Call to Action (CTA)**
+    * **Current:** [Identify the implied or missing CTA]
+    * **Proposed:** [Write a high-value, low-friction CTA. e.g., "Get Your Free Audit" instead of "Learn More"]
+    * **Strategic Rationale:** [Explain how action-oriented, first-person CTAs reduce friction and increase CTR. Cite 2025/2026 data, like HubSpot's findings on personalized CTAs or WiserNotify's above-the-fold placement stats.]
+    """
     """
     
     payload = {
