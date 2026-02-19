@@ -133,4 +133,85 @@ def generate_llm_summary(api_key, model, all_data):
 
     **Subheadline (H2)**
     * **Current:** [Insert Client's Current Meta Description / Subhead]
-    * **Proposed:** [Write a 1-2 sentence subhead that handles objections and expands
+    * **Proposed:** [Write a 1-2 sentence subhead that handles objections and expands on the H1]
+    * **Strategic Rationale:** [Explain why this reduces bounce rate using industry best practices.]
+
+    **Call to Action (CTA)**
+    * **Current:** [Identify the implied or missing CTA]
+    * **Proposed:** [Write a high-value, low-friction CTA. e.g., "Get Your Free Audit" instead of "Learn More"]
+    * **Strategic Rationale:** [Explain how action-oriented, first-person CTAs reduce friction and increase CTR.]
+    """
+    
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}]
+    }
+    
+    try:
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
+        response.raise_for_status()
+        return response.json()['choices'][0]['message']['content']
+    except Exception as e:
+        return f"❌ Error connecting to OpenRouter: {str(e)}"
+
+# --- MAIN EXECUTION ---
+if st.button("Run Competitive Landscape Audit", type="primary"):
+    urls_to_check = [url for url in [target_url, comp1_url, comp2_url, comp3_url] if url.strip()]
+    
+    if not target_url:
+        st.error("⚠️ Please enter a Target Client URL.")
+    elif len(urls_to_check) < 2:
+        st.warning("⚠️ Enter at least 1 competitor URL for a true comparison.")
+    else:
+        with st.spinner("Scraping target and competitor websites..."):
+            
+            # Gather Data
+            results = []
+            roles = ["🎯 Target Client", "🛡️ Competitor 1", "🛡️ Competitor 2", "🛡️ Competitor 3"]
+            
+            for i, url in enumerate(urls_to_check):
+                if not url.startswith("http"):
+                    url = "https://" + url
+                
+                # If it's the target client, pass the raw HTML (if provided)
+                if roles[i] == "🎯 Target Client":
+                    data = analyze_site(url, roles[i], raw_html=target_html)
+                else:
+                    data = analyze_site(url, roles[i])
+                    
+                results.append(data)
+            
+            df = pd.DataFrame(results)
+            
+            st.success("✅ Extraction Complete.")
+            
+            # --- DISPLAY 1: TECHNICAL & GEO READINESS ---
+            st.header("1. Technical & AI Readiness (GEO)")
+            st.markdown("Are the competitors optimizing for AI answer engines?")
+            tech_df = df[["Role", "URL", "llms.txt (AI)", "robots.txt", "sitemap.xml"]]
+            st.dataframe(tech_df, use_container_width=True, hide_index=True)
+            
+            # --- DISPLAY 2: MESSAGING COMPARISON ---
+            st.header("2. Strategic Messaging Matrix")
+            st.markdown("Side-by-side comparison of the primary 'Hooks'.")
+            
+            cols = st.columns(len(results))
+            for i, res in enumerate(results):
+                with cols[i]:
+                    st.info(f"**{res['Role']}**\n\n{res['URL']}")
+                    st.markdown("**H1 (Hero Hook):**")
+                    st.write(f"*{res['H1 (Value Prop)']}*")
+                    st.markdown("**Title Tag:**")
+                    st.write(f"*{res['Title Tag']}*")
+                    st.markdown("**Meta Description:**")
+                    st.caption(res['Meta Description'])
+            
+            # --- DISPLAY 3: LLM SYNTHESIS ---
+            st.header("🧠 Automated Strategy Brief")
+            if not openrouter_api_key:
+                st.warning("⚠️ Enter your OpenRouter API Key to generate the Competitive Strategy Brief.")
+            else:
+                with st.spinner("Analyzing competitive white space..."):
+                    llm_response = generate_llm_summary(openrouter_api_key, llm_model, results)
+                    st.markdown("### STELLAR Competitive Analysis")
+                    st.success(llm_response)
