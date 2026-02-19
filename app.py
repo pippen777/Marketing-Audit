@@ -91,7 +91,7 @@ def generate_llm_summary(api_key, model, all_data):
         "Content-Type": "application/json"
     }
     
-prompt = f"""
+    prompt = f"""
     You are an elite Digital Marketing Expert (DME) at a top agency, partnering with a Creative Director.
     Review this competitive landscape data based on the STELLAR framework.
     
