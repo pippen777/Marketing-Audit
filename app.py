@@ -32,6 +32,12 @@ with st.container():
     with col1:
         st.subheader("🎯 Target Client")
         target_url = st.text_input("Client URL:", placeholder="https://client.com")
+        
+        # MANUAL OVERRIDE (For bot-blocking sites)
+        with st.expander("🛠️ Advanced: Manual HTML Override (Bypass Bot Blockers)"):
+            st.markdown("If the target site blocks scrapers (returns 'Error'), paste the page's raw HTML here.")
+            target_html = st.text_area("Paste Raw HTML source code here:")
+            
     with col2:
         st.subheader("🛡️ Competitors")
         comp1_url = st.text_input("Competitor 1 URL:", placeholder="https://comp1.com")
@@ -50,11 +56,17 @@ def check_file(base_url, path):
     except:
         return "⚠️ Error"
 
-def scrape_seo_basics(url):
-    """Scrapes Title, Description, and H1"""
+def scrape_seo_basics(url, raw_html=""):
+    """Scrapes Title, Description, and H1 either from a URL or raw HTML"""
     try:
-        response = requests.get(url, headers=HEADERS, timeout=5)
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # If raw HTML is provided, bypass the request and parse the text directly
+        if raw_html.strip():
+            html_content = raw_html
+        else:
+            response = requests.get(url, headers=HEADERS, timeout=5)
+            html_content = response.text
+            
+        soup = BeautifulSoup(html_content, 'html.parser')
         
         title = soup.title.string.strip() if soup.title and soup.title.string else "N/A"
         desc_tag = soup.find('meta', attrs={'name': 'description'})
@@ -66,12 +78,14 @@ def scrape_seo_basics(url):
     except:
         return "Error", "Error", "Error"
 
-def analyze_site(url, role):
+def analyze_site(url, role, raw_html=""):
     """Runs the full suite for a single URL"""
     llms = check_file(url, "llms.txt")
     robots = check_file(url, "robots.txt")
     sitemap = check_file(url, "sitemap.xml")
-    title, desc, h1 = scrape_seo_basics(url)
+    
+    # Pass the raw HTML to the scraper if it exists
+    title, desc, h1 = scrape_seo_basics(url, raw_html)
     
     return {
         "Role": role,
@@ -102,7 +116,7 @@ def generate_llm_summary(api_key, model, all_data):
     
     STRICT GUARDRAILS FOR OUTPUT:
     - NEVER use generic marketing buzzwords like "Elevate", "Tailored", "Synergy", or "Transform".
-    - You must cite authoritative 2025/2026 Conversion Rate Optimization (CRO) best practices (e.g., CXL, Nielsen Norman Group, HubSpot, Google Core Web Vitals) to justify your creative decisions.
+    - You must cite authoritative 2025/2026 Conversion Rate Optimization (CRO) best practices (e.g., CXL, Nielsen Norman Group, HubSpot) to justify your creative decisions.
     
     FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
 
@@ -115,82 +129,8 @@ def generate_llm_summary(api_key, model, all_data):
     **Headline (H1)**
     * **Current:** [Insert Client's Current H1]
     * **Proposed:** [Write a punchy, benefit-driven H1 focused on revenue/growth/solutions]
-    * **Strategic Rationale:** [Explain the psychology behind the change. Cite a 2026 UX/CRO best practice, such as CXL's "Clarity trumps persuasion" or Nielsen Norman Group's scanning behaviors.]
+    * **Strategic Rationale:** [Explain the psychology behind the change. Cite a UX/CRO best practice, such as CXL's "Clarity trumps persuasion" or Nielsen Norman Group's scanning behaviors.]
 
     **Subheadline (H2)**
     * **Current:** [Insert Client's Current Meta Description / Subhead]
-    * **Proposed:** [Write a 1-2 sentence subhead that handles objections and expands on the H1]
-    * **Strategic Rationale:** [Explain why this reduces bounce rate using industry best practices.]
-
-    **Call to Action (CTA)**
-    * **Current:** [Identify the implied or missing CTA]
-    * **Proposed:** [Write a high-value, low-friction CTA. e.g., "Get Your Free Audit" instead of "Learn More"]
-    * **Strategic Rationale:** [Explain how action-oriented, first-person CTAs reduce friction and increase CTR. Cite 2025/2026 data.]
-    """
-    
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    
-    try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()['choices'][0]['message']['content']
-    except Exception as e:
-        return f"❌ Error connecting to OpenRouter: {str(e)}"
-# --- MAIN EXECUTION ---
-if st.button("Run Competitive Landscape Audit", type="primary"):
-    urls_to_check = [url for url in [target_url, comp1_url, comp2_url, comp3_url] if url.strip()]
-    
-    if not target_url:
-        st.error("⚠️ Please enter a Target Client URL.")
-    elif len(urls_to_check) < 2:
-        st.warning("⚠️ Enter at least 1 competitor URL for a true comparison.")
-    else:
-        with st.spinner("Scraping target and competitor websites..."):
-            
-            # Gather Data
-            results = []
-            roles = ["🎯 Target Client", "🛡️ Competitor 1", "🛡️ Competitor 2", "🛡️ Competitor 3"]
-            
-            for i, url in enumerate(urls_to_check):
-                if not url.startswith("http"):
-                    url = "https://" + url
-                data = analyze_site(url, roles[i])
-                results.append(data)
-            
-            df = pd.DataFrame(results)
-            
-            st.success("✅ Extraction Complete.")
-            
-            # --- DISPLAY 1: TECHNICAL & GEO READINESS ---
-            st.header("1. Technical & AI Readiness (GEO)")
-            st.markdown("Are the competitors optimizing for AI answer engines?")
-            tech_df = df[["Role", "URL", "llms.txt (AI)", "robots.txt", "sitemap.xml"]]
-            st.dataframe(tech_df, use_container_width=True, hide_index=True)
-            
-            # --- DISPLAY 2: MESSAGING COMPARISON ---
-            st.header("2. Strategic Messaging Matrix")
-            st.markdown("Side-by-side comparison of the primary 'Hooks'.")
-            
-            cols = st.columns(len(results))
-            for i, res in enumerate(results):
-                with cols[i]:
-                    st.info(f"**{res['Role']}**\n\n{res['URL']}")
-                    st.markdown("**H1 (Hero Hook):**")
-                    st.write(f"*{res['H1 (Value Prop)']}*")
-                    st.markdown("**Title Tag:**")
-                    st.write(f"*{res['Title Tag']}*")
-                    st.markdown("**Meta Description:**")
-                    st.caption(res['Meta Description'])
-            
-            # --- DISPLAY 3: LLM SYNTHESIS ---
-            st.header("🧠 Automated Strategy Brief")
-            if not openrouter_api_key:
-                st.warning("⚠️ Enter your OpenRouter API Key to generate the Competitive Strategy Brief.")
-            else:
-                with st.spinner("Analyzing competitive white space..."):
-                    llm_response = generate_llm_summary(openrouter_api_key, llm_model, results)
-                    st.markdown("### STELLAR Competitive Analysis")
-                    st.success(llm_response)
+    * **Proposed:** [Write a 1-2 sentence subhead that handles objections and expands
