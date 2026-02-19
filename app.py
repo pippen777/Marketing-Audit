@@ -91,19 +91,26 @@ def generate_llm_summary(api_key, model, all_data):
         "Content-Type": "application/json"
     }
     
-    prompt = f"""
-    You are a Digital Marketing Expert partnering with a Creative Director.
+prompt = f"""
+    You are an elite Digital Marketing Expert (DME) at a top agency, partnering with a Creative Director.
     Review this competitive landscape data based on the STELLAR framework.
     
     DATA (JSON Format):
     {json.dumps(all_data, indent=2)}
 
     TASK: Write a highly actionable, 3-paragraph Competitive Executive Summary.
-    1. Paragraph 1 (The Landscape): Compare the Target Client's H1 and Meta Description against the competitors. Who has the strongest "Benefit-Focus"? Are the competitors sounding identical?
-    2. Paragraph 2 (The White Space): Identify a messaging or strategic gap the client can exploit to stand out. Mention GEO/AI readiness (llms.txt) if the client or competitors have it.
+    
+    GUARDRAILS (STRICT):
+    - NEVER use generic marketing buzzwords like "Elevate", "Tailored", "Synergy", or "Transform".
+    - If suggesting copy, make it punchy, benefit-driven, and focused on revenue/growth.
+    - If the client has an llms.txt file, frame it as a BACKEND technical advantage for Generative Engine Optimization (GEO). Do NOT suggest adding "AI" to their frontend marketing copy.
+    - CTAs must be low-friction and action-oriented (e.g., "Get Your Free Audit", not "Learn More").
+
+    1. Paragraph 1 (The Landscape): Compare the Target Client's H1 and Meta Description against the competitors. Who has the strongest "Benefit-Focus"? Point out if competitors have missing or broken SEO tags (like missing H1s).
+    2. Paragraph 2 (The White Space): Identify a strategic messaging gap the client can exploit to stand out. 
     3. Paragraph 3 (Creative Directive): Provide a bulleted "Phase 1 Creative Brief" telling the copy and design team exactly how to update the Client's homepage Hero section to beat these competitors.
 
-    Tone: Candid, authoritative, and direct.
+    Tone: Candid, authoritative, direct, and expert-level.
     """
     
     payload = {
